@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HTML2APK · 玻璃拟态</title>
+<style>
+  :root {
+    --bg-1: #0b1020;
+    --bg-2: #1a1b3a;
+    --bg-3: #101c33;
+    --glass: rgba(255, 255, 255, 0.07);
+    --glass-strong: rgba(255, 255, 255, 0.11);
+    --stroke: rgba(255, 255, 255, 0.14);
+    --stroke-soft: rgba(255, 255, 255, 0.08);
+    --text: #eef1f8;
+    --text-dim: #a6aec9;
+    --text-faint: #6b7494;
+    --accent: #5eead4;
+    --accent-ink: #062a26;
+    --violet: #a78bfa;
+    --ok: #34d399;
+    --err: #fb7185;
+    --radius: 22px;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100dvh;
+    font-family: var(--sans);
+    color: var(--text);
+    background:
+      radial-gradient(42% 34% at 12% 4%, rgba(94, 234, 212, 0.16), transparent 70%),
+      radial-gradient(50% 40% at 88% 16%, rgba(167, 139, 250, 0.18), transparent 70%),
+      radial-gradient(60% 50% at 50% 110%, rgba(59, 130, 246, 0.14), transparent 70%),
+      linear-gradient(160deg, var(--bg-1), var(--bg-2) 55%, var(--bg-3));
+    background-attachment: fixed;
+    display: flex; justify-content: center;
+    line-height: 1.6;
+  }
+  /* 无透明度偏好时回退实色 */
+  @media (prefers-reduced-transparency: reduce) {
+    body { background: #0e1428; }
+    .glass, .glass-nav { background: #151c33 !important; backdrop-filter: none !important; }
+  }
+  .app { width: 100%; max-width: 480px; padding: 22px 16px calc(110px + env(safe-area-inset-bottom)); }
+
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+      0 20px 50px rgba(4, 8, 20, 0.45);
+  }
+
+  /* 顶部 */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; margin-bottom: 14px; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo .mark {
+    width: 34px; height: 34px; border-radius: 11px;
+    background: linear-gradient(135deg, rgba(94,234,212,.85), rgba(167,139,250,.85));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(94, 234, 212, 0.3);
+  }
+  .logo .mark svg { width: 18px; height: 18px; color: #071018; }
+  .logo b { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .logo small { display: block; font-size: 11px; color: var(--text-dim); font-weight: 400; }
+  .engine-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 999px;
+    background: rgba(52, 211, 153, 0.14);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    color: var(--ok); font-size: 12px; font-weight: 600;
+  }
+  .engine-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px rgba(52,211,153,.8); }
+  .engine-chip.busy { background: rgba(94,234,212,.14); border-color: rgba(94,234,212,.35); color: var(--accent); }
+  .engine-chip.busy .dot { background: var(--accent); box-shadow: 0 0 8px rgba(94,234,212,.8); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  @media (prefers-reduced-motion: reduce) { .engine-chip.busy .dot { animation: none; } }
+
+  /* 步骤导航 */
+  .nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+  .nav .n {
+    text-align: center; padding: 9px 2px 8px; border-radius: 14px;
+    font-size: 11.5px; font-weight: 600; color: var(--text-faint);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid transparent;
+    cursor: pointer; user-select: none;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .nav .n.on { color: var(--accent); background: rgba(94,234,212,0.10); border-color: rgba(94,234,212,0.28); }
+  .nav .n.done { color: var(--ok); }
+
+  /* 面板 */
+  .card { padding: 20px 18px; margin-bottom: 14px; }
+  .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 14px; letter-spacing: -0.01em; }
+  .card h2 .sub { font-size: 12px; color: var(--text-dim); font-weight: 500; margin-left: 6px; }
+
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn {
+    appearance: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    padding: 12px 14px; border-radius: 14px; color: var(--text);
+    background: var(--glass-strong);
+    border: 1px solid var(--stroke-soft);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: transform .12s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary {
+    background: linear-gradient(135deg, rgba(94,234,212,0.95), rgba(94,234,212,0.8));
+    color: var(--accent-ink); border-color: transparent;
+    box-shadow: 0 6px 20px rgba(94, 234, 212, 0.28);
+  }
+  .btn.primary:disabled { background: rgba(255,255,255,0.08); color: var(--text-faint); box-shadow: none; border-color: var(--stroke-soft); cursor: not-allowed; }
+  .btn.full { width: 100%; }
+
+  .path {
+    margin-top: 10px; padding: 11px 13px; border-radius: 14px;
+    background: rgba(255,255,255,0.05); border: 1px dashed var(--stroke-soft);
+    font-size: 13px; color: var(--text-dim);
+    display: flex; align-items: center; gap: 8px; word-break: break-all;
+  }
+  .path .x { margin-left: auto; color: var(--text-faint); cursor: pointer; flex-shrink: 0; padding: 0 4px; }
+  .path .x:hover { color: var(--err); }
+
+  .field { margin-bottom: 13px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 11px 13px; border-radius: 13px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--stroke-soft);
+    color: var(--text); font-family: inherit; font-size: 14px;
+    outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:focus { border-color: rgba(94,234,212,0.6); box-shadow: 0 0 0 3px rgba(94,234,212,0.12); }
+  .field input::placeholder { color: var(--text-faint); }
+  .field .hint { font-size: 12px; color: var(--text-faint); margin-top: 5px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* 日志 */
+  .log-wrap { padding: 14px; margin-bottom: 14px; }
+  .log {
+    font-family: var(--mono); font-size: 12px; line-height: 1.7;
+    color: var(--text-dim); min-height: 110px; max-height: 240px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .log .step { color: var(--accent); }
+  .log .ok { color: var(--ok); }
+  .log .err { color: var(--err); }
+
+  /* 结果 */
+  .result-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .result-head .icon {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(52,211,153,.9), rgba(94,234,212,.7));
+    display: flex; align-items: center; justify-content: center; color: #062a26;
+    box-shadow: 0 6px 18px rgba(52, 211, 153, 0.35);
+  }
+  .result-head h3 { font-size: 17px; font-weight: 700; }
+  .result-head p { font-size: 13px; color: var(--text-dim); }
+  .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--stroke-soft); }
+  .kv:last-of-type { border-bottom: none; }
+  .kv .k { color: var(--text-dim); flex-shrink: 0; }
+  .kv .v { font-family: var(--mono); font-size: 12.5px; word-break: break-all; text-align: right; }
+
+  .dock {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: 0; width: 100%; max-width: 480px;
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+    z-index: 10;
+  }
+  .dock .bar {
+    padding: 10px; border-radius: 18px;
+    background: rgba(15, 20, 40, 0.55);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    border: 1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 16px 40px rgba(4,8,20,.5);
+  }
+  @media (prefers-reduced-transparency: reduce) { .dock .bar { background: #10162b; backdrop-filter: none; } }
+  .toast {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-10px);
+    padding: 10px 18px; border-radius: 999px;
+    background: rgba(20, 28, 54, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--stroke);
+    color: var(--text); font-size: 13px; font-weight: 500;
+    opacity: 0; transition: all .2s ease; z-index: 99; pointer-events: none;
+    max-width: 88vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="glass topbar">
+    <div class="logo">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h8"/><circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>
+      </div>
+      <div><b>HTML2APK</b><small>本地构建工作台</small></div>
+    </div>
+    <div class="engine-chip" id="engChip"><span class="dot"></span><span id="engText">引擎就绪</span></div>
+  </div>
+
+  <div class="nav">
+    <div class="n on" id="nav1">选择输入</div>
+    <div class="n" id="nav2">应用配置</div>
+    <div class="n" id="nav3">构建</div>
+    <div class="n" id="nav4">完成</div>
+  </div>
+
+  <!-- 视图1 选择 -->
+  <div class="glass card view" id="view1">
+    <h2>选择输入<span class="sub">单个 HTML 或整个文件夹</span></h2>
+    <div class="btn-row">
+      <button class="btn" id="pickFile">📄 选择 HTML 文件</button>
+      <button class="btn" id="pickDir">📁 选择文件夹</button>
+    </div>
+    <div class="path" id="pathBox" hidden><span id="pathText"></span><span class="x" id="clearPath">✕</span></div>
+  </div>
+
+  <!-- 视图2 配置 -->
+  <div class="glass card view" id="view2" hidden>
+    <h2>应用配置<span class="sub">决定安装后的样子</span></h2>
+    <div class="field">
+      <label for="appName">应用名称</label>
+      <input id="appName" placeholder="例如：我的网页工具" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="pkg">包名</label>
+      <input id="pkg" placeholder="留空自动生成" autocomplete="off">
+      <div class="hint">建议格式 com.example.app</div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="verName">版本号</label>
+        <input id="verName" value="1.0" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="verCode">版本代码</label>
+        <input id="verCode" value="1" inputmode="numeric" autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <!-- 视图3 构建 -->
+  <div class="glass card view" id="view3" hidden>
+    <h2>构建日志<span class="sub">实时输出</span></h2>
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- 视图4 结果 -->
+  <div class="glass card view" id="view4" hidden>
+    <div class="result-head">
+      <div class="icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <div>
+        <h3>构建成功</h3>
+        <p>APK 已生成，可以安装了</p>
+      </div>
+    </div>
+    <div class="kv"><span class="k">产物路径</span><span class="v" id="rPath">-</span></div>
+    <div class="kv"><span class="k">文件大小</span><span class="v" id="rSize">-</span></div>
+    <div class="kv"><span class="k">包名</span><span class="v" id="rPkg">-</span></div>
+    <div style="height:14px"></div>
+    <div class="btn-row">
+      <button class="btn primary" id="installBtn">安装 APK</button>
+      <button class="btn" id="openDirBtn">打开目录</button>
+    </div>
+  </div>
+</div>
+
+<div class="dock">
+  <div class="bar">
+    <button class="btn primary full" id="buildBtn" disabled>开始构建</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { input: null, building: false };
+  var steps = [
+    ['init', '初始化构建引擎…'],
+    ['input', '拷贝 HTML 资源…'],
+    ['config', '生成配置与资源…'],
+    ['compile', '编译资源…'],
+    ['link', '链接 APK…'],
+    ['dex', '合并壳代码…'],
+    ['align', '对齐优化…'],
+    ['sign', '签名…'],
+    ['output', '输出 APK…']
+  ];
+
+  function toast(m) { var t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function(){t.classList.remove('show');}, 1800); }
+  function setBusy(on) {
+    $('engChip').className = 'engine-chip' + (on ? ' busy' : '');
+    $('engText').textContent = on ? '构建中…' : '引擎就绪';
+  }
+  function go(view) {
+    [1,2,3,4].forEach(function(v){ $('view'+v).hidden = v !== view; });
+    [1,2,3,4].forEach(function(v){ $('nav'+v).className = 'n' + (v === view ? ' on' : ''); });
+  }
+  function refresh() {
+    $('buildBtn').disabled = !(state.input && $('appName').value.trim() && !state.building);
+    $('nav1').className = 'n' + (state.input ? ' done' : ' on');
+  }
+  ['appName','pkg','verName','verCode'].forEach(function(id){ $(id).addEventListener('input', refresh); });
+
+  $('pickFile').addEventListener('click', function () {
+    var f = document.createElement('input'); f.type='file'; f.accept='.html,.htm';
+    f.onchange = function(){ if(f.files[0]) { state.input = f.files[0].name; showPath(); } };
+    f.click();
+  });
+  $('pickDir').addEventListener('click', function () {
+    var f = document.createElement('input'); f.type='file'; f.webkitdirectory = true;
+    f.onchange = function(){ if(f.files.length){ state.input = '…/' + f.files[0].webkitRelativePath.split('/')[0] + '/'; showPath(); } };
+    f.click();
+  });
+  function showPath(){ $('pathText').textContent = state.input; $('pathBox').hidden = false; refresh(); }
+  $('clearPath').addEventListener('click', function(){ state.input=null; $('pathBox').hidden=true; refresh(); });
+
+  $('buildBtn').addEventListener('click', function () {
+    if (state.building) return;
+    var appName = $('appName').value.trim();
+    if (!appName) { toast('请填写应用名称'); return; }
+    var pkg = $('pkg').value.trim();
+    var re = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/;
+    if (pkg && !re.test(pkg)) { toast('包名格式不正确'); return; }
+    if (!pkg) pkg = 'com.html2apk.app' + Math.floor(Math.random()*99999);
+
+    state.building = true;
+    go(3);
+    var log = $('log'); log.textContent = '';
+    $('buildBtn').disabled = true; $('buildBtn').textContent = '构建中…';
+    setBusy(true);
+    $('nav3').className = 'n on';
+
+    var i = 0;
+    (function tick(){
+      if (i < steps.length) {
+        var s = steps[i];
+        log.textContent += '<span class="step">[' + s[0] + ']</span> ' + s[1] + '\n';
+        log.scrollTop = log.scrollHeight;
+        i++; setTimeout(tick, 200 + Math.random()*200);
+      } else {
+        log.innerHTML += '<span class="ok">[done] 构建完成: 12.7 KB</span>\n';
+        log.scrollTop = log.scrollHeight;
+        state.building = false; setBusy(false);
+        $('rPath').textContent = '/Download/HTML2APK/' + appName + '-v' + ($('verName').value||'1.0') + '.apk';
+        $('rSize').textContent = '12.7 KB';
+        $('rPkg').textContent = pkg;
+        $('nav4').className = 'n done';
+        go(4);
+        $('buildBtn').textContent = '开始构建'; $('buildBtn').disabled = false;
+        toast('构建完成');
+      }
+    })();
+  });
+  $('installBtn').addEventListener('click', function(){ toast('已拉起系统安装器'); });
+  $('openDirBtn').addEventListener('click', function(){ toast('已打开 Download/HTML2APK/'); });
+  refresh();
+})();
+</script>
+</body>
+</html>

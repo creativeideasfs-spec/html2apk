@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HTML2APK · 明亮极简</title>
+<style>
+  :root {
+    --bg: #f6f6f4;
+    --card: #ffffff;
+    --ink: #1b1b19;
+    --ink-2: #5c5c57;
+    --ink-3: #9a9a92;
+    --line: #e6e6e0;
+    --accent: #2563eb;
+    --accent-soft: rgba(37, 99, 235, 0.08);
+    --ok: #16a34a;
+    --err: #dc2626;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(27,27,25,.04), 0 8px 24px rgba(27,27,25,.06);
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100dvh;
+    display: flex; justify-content: center;
+  }
+  .app { width: 100%; max-width: 480px; padding: 28px 20px calc(110px + env(safe-area-inset-bottom)); }
+
+  .brand { margin-bottom: 6px; }
+  .brand h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  .brand p { color: var(--ink-2); font-size: 14px; margin-top: 2px; }
+  .engine-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 10px; padding: 5px 12px;
+    background: var(--accent-soft); color: var(--accent);
+    border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  }
+  .engine-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+
+  .steps { display: flex; gap: 4px; margin: 20px 0 14px; }
+  .steps .s {
+    flex: 1; text-align: center; position: relative;
+    font-size: 11.5px; color: var(--ink-3); font-weight: 600;
+    padding-top: 22px;
+  }
+  .steps .s::before {
+    content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--line);
+    z-index: 1;
+  }
+  .steps .s::after {
+    content: ""; position: absolute; top: 14px; left: 0; right: 0;
+    height: 2px; background: var(--line);
+  }
+  .steps .s:first-child::after { left: 50%; }
+  .steps .s:last-child::after { right: 50%; }
+  .steps .s.active { color: var(--ink); }
+  .steps .s.active::before { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .steps .s.done { color: var(--ink-2); }
+  .steps .s.done::before { border-color: var(--ok); background: var(--ok); }
+  .steps .s.done::after { background: var(--ok); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 14px; letter-spacing: -0.01em; }
+
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn {
+    appearance: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    padding: 11px 14px; border-radius: 10px;
+    transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.25); }
+  .btn.primary:disabled { background: var(--line); color: var(--ink-3); box-shadow: none; cursor: not-allowed; }
+  .btn.secondary { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+  .btn.secondary:disabled { color: var(--ink-3); cursor: not-allowed; }
+  .btn.full { width: 100%; }
+
+  .path {
+    margin-top: 10px; padding: 10px 12px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    font-size: 13px; color: var(--ink-2);
+    display: flex; align-items: center; gap: 8px; word-break: break-all;
+  }
+  .path .x { margin-left: auto; color: var(--ink-3); cursor: pointer; flex-shrink: 0; padding: 0 4px; }
+
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 5px; }
+  .field input {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 10px;
+    font-family: inherit; font-size: 14px; color: var(--ink);
+    background: #fff; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .field input::placeholder { color: var(--ink-3); }
+  .field .hint { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .log-card { display: none; }
+  .log-card.show { display: block; }
+  .log {
+    background: #1b1b19; color: #d4d4cf;
+    border-radius: 10px; padding: 12px 14px;
+    font-family: var(--mono); font-size: 12px; line-height: 1.7;
+    min-height: 110px; max-height: 240px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .log .ok { color: #7ee2a8; }
+  .log .warn { color: #fbbf24; }
+
+  .result-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .result-head .icon {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(22,163,74,.12); color: var(--ok);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .result-head h3 { font-size: 16px; font-weight: 700; }
+  .result-head p { font-size: 13px; color: var(--ink-2); }
+  .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .kv:last-of-type { border-bottom: none; }
+  .kv .k { color: var(--ink-2); flex-shrink: 0; }
+  .kv .v { font-family: var(--mono); font-size: 12.5px; word-break: break-all; text-align: right; }
+
+  .dock {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: 0; width: 100%; max-width: 480px;
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(246,246,244,0), var(--bg) 40%);
+    z-index: 10;
+  }
+  .toast {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-10px);
+    background: var(--ink); color: #fff; font-size: 13px; font-weight: 500;
+    padding: 9px 16px; border-radius: 999px; box-shadow: var(--shadow);
+    opacity: 0; transition: all .2s ease; z-index: 99; pointer-events: none; max-width: 88vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="brand">
+    <h1>HTML2APK</h1>
+    <p>把 HTML 打包成安卓应用，全程在本机完成</p>
+    <div class="engine-pill"><span class="dot"></span>构建引擎就绪</div>
+  </header>
+
+  <div class="steps">
+    <div class="s active" id="st1">选择输入</div>
+    <div class="s" id="st2">应用配置</div>
+    <div class="s" id="st3">构建 APK</div>
+    <div class="s" id="st4">完成</div>
+  </div>
+
+  <div class="card">
+    <h2>选择 HTML 文件或文件夹</h2>
+    <div class="btn-row">
+      <button class="btn secondary" id="pickFile">选择 HTML 文件</button>
+      <button class="btn secondary" id="pickDir">选择文件夹</button>
+    </div>
+    <div class="path" id="pathBox" hidden><span id="pathText"></span><span class="x" id="clearPath">清除</span></div>
+  </div>
+
+  <div class="card">
+    <h2>应用配置</h2>
+    <div class="field">
+      <label for="appName">应用名称</label>
+      <input id="appName" placeholder="例如：我的网页工具" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="pkg">包名</label>
+      <input id="pkg" placeholder="留空自动生成" autocomplete="off">
+      <div class="hint">建议格式 com.example.app</div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="verName">版本号</label>
+        <input id="verName" value="1.0" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="verCode">版本代码</label>
+        <input id="verCode" value="1" inputmode="numeric" autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <div class="card log-card" id="logCard">
+    <h2>构建日志</h2>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="card" id="resultCard" hidden>
+    <div class="result-head">
+      <div class="icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <div>
+        <h3>构建成功</h3>
+        <p>APK 已生成，可以安装了</p>
+      </div>
+    </div>
+    <div class="kv"><span class="k">产物路径</span><span class="v" id="rPath">-</span></div>
+    <div class="kv"><span class="k">文件大小</span><span class="v" id="rSize">-</span></div>
+    <div class="kv"><span class="k">包名</span><span class="v" id="rPkg">-</span></div>
+    <div style="height:14px"></div>
+    <div class="btn-row">
+      <button class="btn primary" id="installBtn">安装 APK</button>
+      <button class="btn secondary" id="openDirBtn">打开目录</button>
+    </div>
+  </div>
+</div>
+
+<div class="dock">
+  <button class="btn primary full" id="buildBtn" disabled>开始构建</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { input: null, building: false };
+  var steps = [
+    ['init', '初始化构建引擎…'],
+    ['input', '拷贝 HTML 资源…'],
+    ['config', '生成配置与资源…'],
+    ['compile', '编译资源…'],
+    ['link', '链接 APK…'],
+    ['dex', '合并壳代码…'],
+    ['align', '对齐优化…'],
+    ['sign', '签名…'],
+    ['output', '输出 APK…']
+  ];
+
+  function toast(m) { var t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function(){t.classList.remove('show');}, 1800); }
+  function refresh() {
+    $('buildBtn').disabled = !(state.input && $('appName').value.trim() && !state.building);
+    $('st1').className = 's' + (state.input ? ' done' : ' active');
+    $('st2').className = 's' + (state.input ? ' active' : '');
+  }
+  ['appName','pkg','verName','verCode'].forEach(function(id){ $(id).addEventListener('input', refresh); });
+
+  $('pickFile').addEventListener('click', function () {
+    var f = document.createElement('input'); f.type='file'; f.accept='.html,.htm';
+    f.onchange = function(){ if(f.files[0]) { state.input = f.files[0].name; showPath(state.input); } };
+    f.click();
+  });
+  $('pickDir').addEventListener('click', function () {
+    var f = document.createElement('input'); f.type='file'; f.webkitdirectory = true;
+    f.onchange = function(){ if(f.files.length){ state.input = '…/' + f.files[0].webkitRelativePath.split('/')[0] + '/'; showPath(state.input); } };
+    f.click();
+  });
+  function showPath(p){ $('pathText').textContent = p; $('pathBox').hidden = false; refresh(); }
+  $('clearPath').addEventListener('click', function(){ state.input=null; $('pathBox').hidden=true; refresh(); });
+
+  $('buildBtn').addEventListener('click', function () {
+    if (state.building) return;
+    var appName = $('appName').value.trim();
+    if (!appName) { toast('请填写应用名称'); return; }
+    var pkg = $('pkg').value.trim();
+    var re = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/;
+    if (pkg && !re.test(pkg)) { toast('包名格式不正确'); return; }
+    if (!pkg) pkg = 'com.html2apk.app' + Math.floor(Math.random()*99999);
+
+    state.building = true;
+    $('resultCard').hidden = true;
+    $('logCard').classList.add('show');
+    var log = $('log'); log.textContent = '';
+    $('buildBtn').disabled = true; $('buildBtn').textContent = '构建中…';
+    $('st3').className = 's active';
+
+    var i = 0;
+    (function tick(){
+      if (i < steps.length) {
+        var s = steps[i];
+        log.textContent += '[' + s[0] + '] ' + s[1] + '\n';
+        log.scrollTop = log.scrollHeight;
+        i++; setTimeout(tick, 200 + Math.random()*200);
+      } else {
+        log.textContent += '[done] 构建完成: 12.7 KB\n';
+        log.scrollTop = log.scrollHeight;
+        state.building = false;
+        $('rPath').textContent = '/Download/HTML2APK/' + appName + '-v' + ($('verName').value||'1.0') + '.apk';
+        $('rSize').textContent = '12.7 KB';
+        $('rPkg').textContent = pkg;
+        $('resultCard').hidden = false;
+        $('buildBtn').textContent = '开始构建'; $('buildBtn').disabled = false;
+        $('st4').className = 's done';
+        toast('构建完成');
+      }
+    })();
+  });
+  $('installBtn').addEventListener('click', function(){ toast('已拉起系统安装器'); });
+  $('openDirBtn').addEventListener('click', function(){ toast('已打开 Download/HTML2APK/'); });
+  refresh();
+})();
+</script>
+</body>
+</html>

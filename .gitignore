@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# IDE
+.idea/
+*.iml
+
+# 本地配置
+local.properties
+
+# 引擎资产（构建时从工具链生成）
+app/src/main/assets/engine/aapt2
+app/src/main/assets/engine/zipalign
+app/src/main/assets/engine/android.jar
+app/src/main/assets/engine/template.dex
+app/libs/apksig-8.5.2.jar
+
+# 壳编译产物 / 测试 APK
+shell-tpl/out/
+shell-tpl/test/*.apk

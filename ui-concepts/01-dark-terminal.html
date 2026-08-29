@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HTML2APK · 深色终端</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --panel: #10161f;
+    --panel-2: #131b26;
+    --line: #1f2a38;
+    --line-strong: #2a3a4f;
+    --text: #c9d1d9;
+    --text-dim: #7d8b9c;
+    --text-faint: #4a5768;
+    --accent: #e5a13a;
+    --accent-soft: rgba(229, 161, 58, 0.12);
+    --ok: #4cd964;
+    --err: #ff6b6b;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+  }
+  .app { width: 100%; max-width: 480px; padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); }
+
+  /* 终端标题栏 */
+  .term-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+  }
+  .dots { display: flex; gap: 5px; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+  .dots i:nth-child(1) { background: #ff5f57; }
+  .dots i:nth-child(2) { background: #febc2e; }
+  .dots i:nth-child(3) { background: #28c840; }
+  .term-title { color: var(--text-faint); font-size: 11px; letter-spacing: 0.06em; margin-left: 4px; }
+  .term-title b { color: var(--text-dim); font-weight: 400; }
+
+  /* 状态条 */
+  .status-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--panel);
+    border: 1px solid var(--line); border-top: none;
+  }
+  .status { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-dim); }
+  .status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px rgba(76, 217, 100, 0.7); }
+  .status .dot.busy { background: var(--accent); box-shadow: 0 0 6px rgba(229,161,58,.7); }
+  .ver { font-size: 11px; color: var(--text-faint); }
+
+  /* 面板 */
+  .panel {
+    margin-top: 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+    font-size: 12px; color: var(--text-dim);
+  }
+  .panel-head .no { color: var(--accent); }
+  .panel-head .tag { margin-left: auto; font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.12em; }
+  .panel-body { padding: 14px 12px; }
+
+  /* 按钮 */
+  .btn {
+    appearance: none; border: none; cursor: pointer;
+    font-family: var(--mono); font-size: 13px;
+    padding: 10px 12px; border-radius: 6px;
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--line-strong);
+    transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+    width: 100%; text-align: center;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn.primary { background: var(--accent); color: #0a0e14; border-color: var(--accent); font-weight: 700; }
+  .btn.primary:disabled { background: var(--line); color: var(--text-faint); border-color: var(--line); cursor: not-allowed; }
+  .btn.ghost { background: transparent; }
+  .btn.ghost:disabled { color: var(--text-faint); border-color: var(--line); cursor: not-allowed; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* 输入 */
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 5px; letter-spacing: 0.04em; }
+  .field label::before { content: "$ "; color: var(--accent); }
+  .field input {
+    width: 100%; padding: 9px 10px;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--line-strong); border-radius: 6px;
+    font-family: var(--mono); font-size: 13px;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .field input::placeholder { color: var(--text-faint); }
+  .field .hint { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* 已选路径 */
+  .path-box {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 6px;
+    background: var(--bg); border: 1px dashed var(--line-strong);
+    font-size: 12px; color: var(--text-dim);
+    word-break: break-all;
+  }
+  .path-box .x { margin-left: auto; color: var(--text-faint); cursor: pointer; flex-shrink: 0; padding: 0 4px; }
+  .path-box .x:hover { color: var(--err); }
+
+  /* 日志 */
+  .log {
+    padding: 10px 12px; background: #070a0f;
+    font-size: 12px; line-height: 1.7;
+    min-height: 120px; max-height: 260px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .log .ln { color: var(--text-dim); }
+  .log .step { color: var(--accent); }
+  .log .ok { color: var(--ok); }
+  .log .err { color: var(--err); }
+  .log .cursor::after { content: "▊"; color: var(--accent); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .log .cursor::after { animation: none; } }
+
+  /* 结果 */
+  .result { text-align: left; }
+  .result .ok-line { color: var(--ok); font-size: 13px; margin-bottom: 8px; }
+  .result .kv { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+  .result .kv:last-of-type { border-bottom: none; }
+  .result .kv .k { color: var(--text-faint); }
+  .result .kv .v { color: var(--text); word-break: break-all; text-align: right; }
+
+  /* 底部构建栏 */
+  .dock {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: 0; width: 100%; max-width: 480px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(10, 14, 20, 0.92);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--line);
+    z-index: 10;
+  }
+  .toast {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-8px);
+    background: var(--panel-2); border: 1px solid var(--line-strong);
+    color: var(--text); font-size: 12px; padding: 8px 14px; border-radius: 6px;
+    opacity: 0; transition: all 0.2s ease; z-index: 99; pointer-events: none;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="term-head">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div class="term-title">HTML2APK <b>· 本地构建控制台</b></div>
+  </div>
+  <div class="status-bar">
+    <div class="status"><span class="dot" id="engDot"></span><span id="engText">engine ready</span></div>
+    <div class="ver">v1.0.1 · arm64</div>
+  </div>
+
+  <!-- 01 输入 -->
+  <div class="panel">
+    <div class="panel-head"><span class="no">[01]</span> 选择 HTML 输入 <span class="tag">input</span></div>
+    <div class="panel-body">
+      <div class="btn-row">
+        <button class="btn" id="pickFile">选择 HTML 文件</button>
+        <button class="btn" id="pickDir">选择文件夹</button>
+      </div>
+      <div style="height:8px"></div>
+      <div class="path-box" id="pathBox" hidden><span id="pathText"></span><span class="x" id="clearPath">✕</span></div>
+    </div>
+  </div>
+
+  <!-- 02 配置 -->
+  <div class="panel">
+    <div class="panel-head"><span class="no">[02]</span> 应用配置 <span class="tag">config</span></div>
+    <div class="panel-body">
+      <div class="field"><label for="appName">app_name</label><input id="appName" placeholder="例如：我的网页工具" autocomplete="off"></div>
+      <div class="field"><label for="pkg">package</label><input id="pkg" placeholder="留空自动生成" autocomplete="off"><div class="hint">格式 com.example.app，仅小写字母/数字/点</div></div>
+      <div class="grid-2">
+        <div class="field"><label for="verName">version</label><input id="verName" value="1.0" autocomplete="off"></div>
+        <div class="field"><label for="verCode">code</label><input id="verCode" value="1" inputmode="numeric" autocomplete="off"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 构建 -->
+  <div class="panel" id="buildPanel">
+    <div class="panel-head"><span class="no">[03]</span> 构建输出 <span class="tag">stdout</span></div>
+    <div class="log" id="log" hidden><span class="ln">$ html2apk build --app <span class="step">…</span> --pkg <span class="step">…</span></span><span id="logBody"></span><span class="cursor"></span></div>
+  </div>
+
+  <!-- 04 结果 -->
+  <div class="panel" id="resultPanel" hidden>
+    <div class="panel-head"><span class="no">[04]</span> 构建结果 <span class="tag">exit 0</span></div>
+    <div class="panel-body result">
+      <div class="ok-line">✓ BUILD COMPLETE</div>
+      <div class="kv"><span class="k">output</span><span class="v" id="rPath">-</span></div>
+      <div class="kv"><span class="k">size</span><span class="v" id="rSize">-</span></div>
+      <div class="kv"><span class="k">pkg</span><span class="v" id="rPkg">-</span></div>
+      <div style="height:10px"></div>
+      <div class="btn-row">
+        <button class="btn primary" id="installBtn">安装 APK</button>
+        <button class="btn" id="openDirBtn">打开目录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dock">
+  <button class="btn primary" id="buildBtn" disabled>RUN BUILD</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { inputDir: null, building: false, done: false, busy: false };
+  var busyTimer = null;
+
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, 1800);
+  }
+  function setBusy(on) {
+    state.busy = on;
+    $('engDot').className = 'dot' + (on ? ' busy' : '');
+    $('engText').textContent = on ? 'engine busy…' : 'engine ready';
+  }
+  function setPath(p) {
+    state.inputDir = p;
+    $('pathText').textContent = p;
+    $('pathBox').hidden = false;
+    refresh();
+  }
+  function refresh() {
+    var ok = state.inputDir && $('appName').value.trim() && !state.building;
+    $('buildBtn').disabled = !ok;
+  }
+  ['appName','pkg','verName','verCode'].forEach(function (id) {
+    $(id).addEventListener('input', refresh);
+  });
+
+  $('pickFile').addEventListener('click', function () {
+    var f = document.createElement('input'); f.type = 'file'; f.accept = '.html,.htm';
+    f.onchange = function () { if (f.files[0]) setPath(f.files[0].name); };
+    f.click();
+  });
+  $('pickDir').addEventListener('click', function () {
+    var f = document.createElement('input'); f.type = 'file'; f.webkitdirectory = true;
+    f.onchange = function () { if (f.files.length) setPath('…/' + f.files[0].webkitRelativePath.split('/')[0] + '/'); };
+    f.click();
+  });
+  $('clearPath').addEventListener('click', function () { state.inputDir = null; $('pathBox').hidden = true; refresh(); });
+
+  var steps = [
+    ['init', '初始化构建引擎…'],
+    ['input', '拷贝 HTML 资源…'],
+    ['config', '生成配置与资源…'],
+    ['compile', '编译资源…'],
+    ['link', '链接 APK…'],
+    ['dex', '合并壳代码…'],
+    ['align', '对齐优化…'],
+    ['sign', '签名…'],
+    ['output', '输出 APK…'],
+    ['done', '构建完成']
+  ];
+
+  $('buildBtn').addEventListener('click', function () {
+    if (state.building || state.busy) return;
+    var appName = $('appName').value.trim();
+    if (!appName) { toast('请填写应用名称'); return; }
+    var pkg = $('pkg').value.trim();
+    var pkgRe = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/;
+    if (pkg && !pkgRe.test(pkg)) { toast('包名格式不正确'); return; }
+    if (!pkg) pkg = 'com.html2apk.app' + Math.floor(Math.random() * 99999);
+
+    state.building = true; state.done = false;
+    $('resultPanel').hidden = true;
+    $('buildPanel').hidden = false;
+    var log = $('log'); log.hidden = false;
+    var body = $('logBody'); body.textContent = '';
+    $('buildBtn').disabled = true;
+    $('buildBtn').textContent = 'BUILDING…';
+    setBusy(true);
+
+    var seed = '\n[init] 初始化构建引擎…\n[input] 拷贝 HTML 资源…\n[config] 生成配置与资源…\n[compile] 编译资源…\n[link] 链接 APK…\n[dex] 合并壳代码…\n[align] 对齐优化…\n[sign] 签名…\n[output] 输出 APK…\n[ok] 构建完成: 12.7 KB\n';
+    body.textContent = '';
+    var i = 0;
+    (function tick() {
+      if (i < steps.length) {
+        var s = steps[i];
+        body.textContent += '[' + s[0] + '] ' + s[1] + '\n';
+        log.scrollTop = log.scrollHeight;
+        i++;
+        setTimeout(tick, 220 + Math.random() * 220);
+      } else {
+        body.textContent += '[ok] 构建完成: 12.7 KB\n';
+        setBusy(false); state.building = false;
+        $('rPath').textContent = '/Download/HTML2APK/' + appName + '-v' + ($('verName').value || '1.0') + '.apk';
+        $('rSize').textContent = '12.7 KB';
+        $('rPkg').textContent = pkg;
+        $('resultPanel').hidden = false;
+        $('buildBtn').textContent = 'RUN BUILD';
+        $('buildBtn').disabled = false;
+        toast('构建完成');
+      }
+    })();
+  });
+
+  $('installBtn').addEventListener('click', function () { toast('已拉起系统安装器'); });
+  $('openDirBtn').addEventListener('click', function () { toast('已打开 Download/HTML2APK/'); });
+  refresh();
+})();
+</script>
+</body>
+</html>

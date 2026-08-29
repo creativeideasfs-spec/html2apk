@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <files-path name="work" path="work/" />
+    <files-path name="out" path="out/" />
+    <!-- 构建产物：Download/HTML2APK/xxx.apk -->
+    <external-path name="download" path="Download/HTML2APK/" />
+</paths>

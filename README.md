@@ -7,7 +7,7 @@
 
 - 📄 **两种输入**：单个 HTML 文件 / 文件夹（含 CSS、JS、图片、子目录，保持相对结构）
 - 🧱 **自包含构建引擎**：App 内置 arm64 静态 `aapt2` + `zipalign` + `apksig` 签名库 + 固定壳 `classes.dex`，全程在设备本地完成 compile → link → merge dex → align → sign
-- 🎨 **深色终端工具风 UI**（WebView Hybrid，JS Bridge 调原生构建）
+- 🎨 **工业复古控制台 UI**（WebView Hybrid，JS Bridge 调原生构建）
 - 📦 **产物**：`Download/HTML2APK/<应用名>-v<版本>.apk`，v2/v3 签名，minSdk 24 / targetSdk 33
 - 🚀 **一键安装**：产物支持直接拉起系统安装器
 
@@ -54,7 +54,7 @@ html2apk/
 │   │   │       ├── ManifestGenerator.kt# manifest/res 生成
 │   │   │       └── ApkSignerRunner.kt  # apksig v2/v3 签名
 │   │   ├── assets/
-│   │   │   ├── ui/                     # Hybrid UI（深色终端风）
+│   │   │   ├── ui/                     # Hybrid UI（工业复古控制台风）
 │   │   │   └── engine/                 # android.jar / template.dex / manifest 模板 / VERSION
 │   │   ├── jniLibs/arm64-v8a/          # libaapt2.so / libzipalign.so
 │   │   └── res/raw/release.keystore    # 内置默认签名密钥（密码 html2apk2026）

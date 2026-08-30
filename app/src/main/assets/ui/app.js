@@ -13,6 +13,7 @@
   var bridge = window.html2apk;
   var state = {
     inputDir: '',
+    iconPath: '',
     building: false,
     engineReady: false
   };
@@ -113,6 +114,7 @@
       versionCode: versionCode,
       entryFile: 'index.html',
       inputDir: state.inputDir,
+      iconPath: state.iconPath,
       statusBarColor: '#f0ede4',
       navBarColor: '#f0ede4',
       backgroundColor: '#f0ede4'
@@ -133,6 +135,27 @@
 
   /* ---------- 原生回调 ---------- */
   window.onPickResult = function (path) { onPickResult(path); };
+
+  /* ---------- 封面图标 ---------- */
+  window.onIconResult = function (path, preview) {
+    if (!path || !preview) {
+      toast('图片选择失败或无法解码');
+      return;
+    }
+    state.iconPath = path;
+    var img = $('iconPreview');
+    img.src = preview;
+    img.hidden = false;
+    $('iconClear').hidden = false;
+    toast('封面图标已设置');
+  };
+
+  function clearIcon() {
+    state.iconPath = '';
+    $('iconPreview').hidden = true;
+    $('iconPreview').removeAttribute('src');
+    $('iconClear').hidden = true;
+  }
 
   window.onBuildProgress = function (step, msg) {
     appendLog(stamp() + '[' + step + '] ' + msg, 'step');
@@ -180,6 +203,11 @@
     });
     $('buildBtn').addEventListener('click', startBuild);
     $('installBtn').addEventListener('click', function () { bridge.installApk(); });
+    $('iconBtn').addEventListener('click', function () {
+      if (state.building) return;
+      bridge.pickIcon('onIconResult');
+    });
+    $('iconClear').addEventListener('click', clearIcon);
     ['appName', 'pkg', 'verName', 'verCode'].forEach(function (id) {
       $(id).addEventListener('input', refreshBuildBtn);
     });

@@ -59,7 +59,8 @@ object BuildEngine {
             progress("config", "生成配置与资源…")
             ManifestGenerator.generateManifest(engine.manifestTpl, cfg, File(buildDir, "AndroidManifest.xml"))
             ManifestGenerator.generateStringsXml(resDir, cfg.appName)
-            ManifestGenerator.generateDefaultIcon(resDir)
+            val customIcon = ManifestGenerator.generateIconSet(resDir, cfg.iconPath)
+            progress("icon", if (customIcon) "已应用自定义封面图标" else "使用默认图标")
 
             // 确定入口 HTML（优先 index.html；单文件输入已被重命名；否则取 assets 下第一个 .html）
             val entry = resolveEntryFile(assetsDir, cfg.entryFile)

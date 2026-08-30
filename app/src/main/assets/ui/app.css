@@ -129,6 +129,17 @@ body {
 .field .hint { font-size: 11px; color: var(--ink-3); margin-top: 4px; letter-spacing: 0.02em; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+/* 封面图标选择行 */
+.icon-row { display: flex; align-items: center; gap: 10px; }
+.icon-row .icon-preview {
+  width: 52px; height: 52px; flex-shrink: 0;
+  border: 2px solid var(--ink); background: #fff;
+  box-shadow: 3px 3px 0 var(--ink);
+  object-fit: cover; image-rendering: auto;
+}
+.btn.small { padding: 8px 12px; font-size: 12px; }
+.btn.ghost { background: var(--paper-2); color: var(--ink); }
+
 /* 日志（打印纸） */
 .log-wrap { background: #fbfaf5; border: 2px solid var(--ink); padding: 10px; }
 .log {

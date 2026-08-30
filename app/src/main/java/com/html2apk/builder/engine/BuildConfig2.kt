@@ -13,7 +13,8 @@ data class BuildConfig2(
     val inputDir: String,         // 用户选择的 HTML/文件夹已拷贝到的构建输入目录
     val statusBarColor: String = "#111111",
     val navBarColor: String = "#111111",
-    val backgroundColor: String = "#111111"
+    val backgroundColor: String = "#111111",
+    val iconPath: String = ""            // 自定义封面图标路径（空 = 使用默认图标）
 ) {
     companion object {
         fun fromJson(json: String): BuildConfig2 {
@@ -27,7 +28,8 @@ data class BuildConfig2(
                 inputDir = o.optString("inputDir", ""),
                 statusBarColor = o.optString("statusBarColor", "#111111"),
                 navBarColor = o.optString("navBarColor", "#111111"),
-                backgroundColor = o.optString("backgroundColor", "#111111")
+                backgroundColor = o.optString("backgroundColor", "#111111"),
+                iconPath = o.optString("iconPath", "")
             )
         }
     }

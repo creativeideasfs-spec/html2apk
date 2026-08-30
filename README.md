@@ -6,6 +6,7 @@
 ## 功能
 
 - 📄 **两种输入**：单个 HTML 文件 / 文件夹（含 CSS、JS、图片、子目录，保持相对结构）
+- 🎨 **自定义封面图标**：上传任意图片作为产物 APK 的桌面图标（自动中心裁剪 + 多密度生成）；不选则使用内置默认图标
 - 🧱 **自包含构建引擎**：App 内置 arm64 静态 `aapt2` + `zipalign` + `apksig` 签名库 + 固定壳 `classes.dex`，全程在设备本地完成 compile → link → merge dex → align → sign
 - 🎨 **工业复古控制台 UI**（WebView Hybrid，JS Bridge 调原生构建）
 - 📦 **产物**：`Download/HTML2APK/<应用名>-v<版本>.apk`，v2/v3 签名，minSdk 24 / targetSdk 33
@@ -88,7 +89,7 @@ bash build-tools/collect-engine.sh   # 从工作区工具链采集 → jniLibs +
 ## 使用
 
 1. 打开 HTML2APK → 选择「HTML 文件」或「文件夹」（SAF）
-2. 填写应用名称（必填）、包名（留空自动生成）、版本号
+2. 填写应用名称（必填）、包名（留空自动生成）、版本号；可选上传一张封面图标图片
 3. 点「开始构建」→ 终端日志实时输出 → 完成后产物在 `Download/HTML2APK/`
 4. 点「安装 APK」直接拉起系统安装器
 

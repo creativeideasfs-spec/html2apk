@@ -17,6 +17,7 @@ import android.widget.Toast
 import com.html2apk.builder.engine.BuildConfig2
 import com.html2apk.builder.engine.BuildEngine
 import com.html2apk.builder.engine.EngineManager
+import com.html2apk.builder.engine.ManifestGenerator
 import com.html2apk.builder.file.FileService
 import com.html2apk.builder.install.ApkInstaller
 import org.json.JSONObject
@@ -33,6 +34,7 @@ class MainActivity : Activity() {
         private const val REQ_PICK_HTML = 1001
         private const val REQ_PICK_FOLDER = 1002
         private const val REQ_INSTALL_PERM = 1003
+        private const val REQ_PICK_ICON = 1004
         private var pendingPickCallback: String? = null
     }
 
@@ -88,6 +90,14 @@ class MainActivity : Activity() {
                 val copied = if (uri != null) FileService.copyTreeToBuildDir(this, uri) else null
                 if (cb != null) evalJs("window.$cb && window.$cb(${JSONObject.quote(copied ?: "")})")
             }
+            REQ_PICK_ICON -> {
+                val uri = data.data
+                val iconPath = if (uri != null) FileService.copyIconToBuildDir(this, uri) else null
+                if (cb != null) {
+                    val preview = iconPath?.let { ManifestGenerator.makePreviewDataUri(it) }
+                    evalJs("window.$cb && window.$cb(${JSONObject.quote(iconPath ?: "")}, ${JSONObject.quote(preview ?: "")})")
+                }
+            }
         }
     }
 
@@ -136,6 +146,24 @@ class MainActivity : Activity() {
                 } catch (e: Exception) {
                     pendingPickCallback = null
                     toastMsg("无法打开文件夹选择器: ${e.message}")
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun pickIcon(callback: String) {
+            runOnUiThread {
+                pendingPickCallback = callback
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "image/*"
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*"))
+                }
+                try {
+                    startActivityForResult(intent, REQ_PICK_ICON)
+                } catch (e: Exception) {
+                    pendingPickCallback = null
+                    toastMsg("无法打开图片选择器: ${e.message}")
                 }
             }
         }

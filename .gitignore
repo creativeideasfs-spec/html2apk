@@ -20,3 +20,5 @@ app/libs/apksig-8.5.2.jar
 # 壳编译产物 / 测试 APK
 shell-tpl/out/
 shell-tpl/test/*.apk
+# 本地 git 操作备份
+.backup/

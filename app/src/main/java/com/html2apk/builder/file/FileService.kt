@@ -74,6 +74,23 @@ object FileService {
         }
     }
 
+    /** 拷贝封面图标到构建目录（固定名 icon.png，覆盖旧图）；返回路径（null=失败） */
+    fun copyIconToBuildDir(ctx: Context, uri: Uri): String? {
+        return try {
+            val workDir = File(ctx.filesDir, "work")
+            workDir.mkdirs()
+            val dest = File(workDir, "icon.png")
+            ctx.contentResolver.openInputStream(uri)?.use { input ->
+                dest.outputStream().use { output -> input.copyTo(output) }
+            } ?: return null
+            Log.i(TAG, "copied icon -> $dest")
+            dest.absolutePath
+        } catch (e: Exception) {
+            Log.e(TAG, "copy icon failed", e)
+            null
+        }
+    }
+
     private fun queryDisplayName(ctx: Context, uri: Uri): String? {
         ctx.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
             if (c.moveToFirst()) {

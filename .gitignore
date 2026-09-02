@@ -22,3 +22,5 @@ shell-tpl/out/
 shell-tpl/test/*.apk
 # 本地 git 操作备份
 .backup/
+# 本地发布归档（APK 不入库）
+04-备份归档/

@@ -39,6 +39,7 @@
 | aapt2 动态链接缺 lib 依赖 | 使用 lzhiyong/android-sdk-tools 的**静态 aarch64 版** |
 | targetSdk 30+ 要求 `resources.arsc` 不压缩且 4 字节对齐 | link 加 `-0 arsc`；mergeDex 对 arsc 用 STORED 写入（预计算 CRC/size）；zipalign 对齐 |
 | 资源名 `.keystore` 被 aapt2 剥离扩展名 | 密钥资源实际名 `raw/release`，用 `R.raw.release` 编译期常量引用 |
+| 部分 Android 系统/ROM 的 BouncyCastle 裁剪 PBE 算法，运行时 `KeyStore("PKCS12")` 解析内置 keystore 抛 `No installed provider supports this key: ...PKCS12Key` | 密钥改为**打包 PKCS8 DER 私钥 + X.509 DER 证书**（raw/release_key、release_cert），运行时用 `KeyFactory`/`CertificateFactory` 直接构建，只依赖 Conscrypt（全设备可用） |
 | `pm install -r` 升级后残留旧引擎资产 | `assets/engine/VERSION` 版本号机制，不一致全量刷新 |
 
 ## 目录结构
@@ -58,7 +59,7 @@ html2apk/
 │   │   │   ├── ui/                     # Hybrid UI（工业复古控制台风）
 │   │   │   └── engine/                 # android.jar / template.dex / manifest 模板 / VERSION
 │   │   ├── jniLibs/arm64-v8a/          # libaapt2.so / libzipalign.so
-│   │   └── res/raw/release.keystore    # 内置默认签名密钥（密码 html2apk2026）
+│   │   └── res/raw/                   # 内置默认签名密钥：release_key(PKCS8 DER) + release_cert(X.509 DER)
 │   └── libs/apksig-8.5.2.jar
 ├── shell-tpl/                  # 产物壳源码（Java 8，预编译 classes.dex）
 │   ├── src/com/html2apk/shell/MainActivity.java

@@ -1,40 +1,104 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="af">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f0ede4">
-<title>HTML2APK · 工业控制台</title>
+<meta name="theme-color" content="#0B0E14">
+<title>PS Builder · App Vervaardiger</title>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
 <div class="app">
   <div class="brandbar">
-    <div class="name">HTML2APK<small>LOCAL APK FABRICATOR</small></div>
-    <div class="mach">MACHINE&nbsp;01</div>
+    <div class="name">PS BUILDER<small>PLAASLIKE APK VERVAARDIGER</small></div>
+    <div class="mach">MASJIEN&nbsp;01</div>
   </div>
   <div class="warn-strip">
-    <span>⚠ 离线构建 · 数据不出设备</span>
-    <span class="eng"><i id="engLed" class="led off"></i><span id="engText">ENGINE CHECK</span></span>
+    <span>⚠ Vanlyn bou · data bly op toestel</span>
+    <span class="eng"><i id="engLed" class="led off"></i><span id="engText">ENJIN TOETS</span></span>
   </div>
 
   <div class="panel">
-    <div class="panel-tag"><span class="code">[01]</span> INPUT FEED <span>选择输入</span></div>
+    <div class="panel-tag"><span class="code">[01]</span> INVOER <span>Kies jou HTML</span></div>
     <div class="panel-body">
       <div class="btn-row">
-        <button class="btn" id="pickFile">选择 HTML 文件<span class="sub">SINGLE FILE</span></button>
-        <button class="btn" id="pickDir">选择文件夹<span class="sub">DIRECTORY</span></button>
+        <button class="btn" id="pickFile">Kies HTML-lêer<span class="sub">ENKELE LÊER</span></button>
+        <button class="btn" id="pickDir">Kies Gids<span class="sub">GIDS</span></button>
       </div>
-      <div class="path" id="pathBox" hidden><span id="pathText"></span><span class="x" id="clearPath">✕ 清除</span></div>
+      <div class="path" id="pathBox" hidden><span id="pathText"></span><span class="x" id="clearPath">✕ Vee Uit</span></div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-tag"><span class="code">[02]</span> CONFIG DIALS <span>应用配置</span></div>
+    <div class="panel-tag"><span class="code">[02]</span> APP INSTELLINGS <span>Konfigurasie</span></div>
     <div class="panel-body">
       <div class="field">
-        <label for="appName">应用名称 <i>REQUIRED</i></label>
-        <input id="appName" placeholder="例如：我的网页工具" autocomplete="off">
+        <label for="appName">App Naam <i>VERPLIG</i></label>
+        <input id="appName" placeholder="Bv: My Invoice App" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="pkg">Package Naam <i>OPSIONEEL</i></label>
+        <input id="pkg" placeholder="Los leeg = outomaties geskep" autocomplete="off">
+        <div class="hint">Formaat: com.example.app</div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="verName">Weergawe</label>
+          <input id="verName" value="1.0" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="verCode">Weergawe Kode</label>
+          <input id="verCode" value="1" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="iconBtn">App Ikoon <i>OPSIONEEL</i></label>
+        <div class="icon-row">
+          <img id="iconPreview" class="icon-preview" alt="icon" hidden>
+          <button class="btn small" id="iconBtn">Kies Prent<span class="sub">VOORBLAD</span></button>
+          <button class="btn small ghost" id="iconClear" hidden>Herstel<span class="sub">VERSTEK</span></button>
+        </div>
+        <div class="hint">Kies 'n vierkantige prent vir jou APK se tuisskerm ikoon. Los leeg = gebruik verstek.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-tag"><span class="code">[03]</span> BOU LOG <span>Uitvoer</span></div>
+    <div class="panel-body">
+      <div class="log-wrap">
+        <div class="log" id="log"><span class="t">-- wag vir bou --</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="resultPanel" hidden>
+    <div class="panel-tag"><span class="code">[04]</span> FINALE UITVOER <span>Resultaat</span></div>
+    <div class="panel-body">
+      <div class="result-stamp">
+        <div class="seal"><b>OK</b>BOU</div>
+        <div>
+          <h3>Bou suksesvol</h3>
+          <p>APK is gereed, kan dadelik installeer</p>
+        </div>
+      </div>
+      <div class="kv"><span class="k">LÊER</span><span class="v" id="rPath">-</span></div>
+      <div class="kv"><span class="k">GROOTTE</span><span class="v" id="rSize">-</span></div>
+      <div class="kv"><span class="k">PACKAGE</span><span class="v" id="rPkg">-</span></div>
+      <div style="height:12px"></div>
+      <button class="btn primary full" id="installBtn">Installeer APK<span class="sub">INSTALLEER NOU</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="dock">
+  <button class="btn primary full" id="buildBtn" disabled>BOU APK</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>        <input id="appName" placeholder="例如：我的网页工具" autocomplete="off">
       </div>
       <div class="field">
         <label for="pkg">包名 <i>OPTIONAL</i></label>

@@ -1,11 +1,11 @@
 /* ============================================================
-   HTML2APK · 工业复古控制台 UI 逻辑（对接真实 JsBridge）
-   Bridge 约定：
+   PS Builder · Plaaslike APK Vervaardiger UI Logika
+   Bridge konvensie:
    - window.html2apk.pickHtmlFile(cb) / pickFolder(cb)
    - window.html2apk.startBuild(configJson)
    - window.html2apk.installApk() / openApkFolder()
    - window.html2apk.getEngineStatus() / getDownloadDir() / toast(msg)
-   原生回调：window.onPickResult / onBuildProgress / onBuildDone / onBuildError
+   Native callbacks: window.onPickResult / onBuildProgress / onBuildDone / onBuildError
    ============================================================ */
 (function () {
   'use strict';
@@ -21,31 +21,31 @@
   var $ = function (id) { return document.getElementById(id); };
   var LOG = $('log');
 
-  /* ---------- 引擎状态（顶部 LED） ---------- */
+  /* ---------- Enjin status (LED bo) ---------- */
   function setEngine(status, text) {
     var led = $('engLed');
     led.className = 'led ' + status;
     $('engText').textContent = text;
   }
   function checkEngine() {
-    if (!bridge || !bridge.getEngineStatus) { setEngine('fault', 'NO BRIDGE'); return; }
+    if (!bridge || !bridge.getEngineStatus) { setEngine('fault', 'GEEN BRIDGE'); return; }
     try {
       var res = JSON.parse(bridge.getEngineStatus());
       if (res.ready) {
         state.engineReady = true;
-        setEngine('on', 'ENGINE READY');
+        setEngine('on', 'ENJIN GEREED');
       } else {
         state.engineReady = false;
-        setEngine('fault', 'ENGINE FAULT');
+        setEngine('fault', 'ENJIN FOUT');
       }
     } catch (e) {
       state.engineReady = false;
-      setEngine('fault', 'ENGINE FAULT');
+      setEngine('fault', 'ENJIN FOUT');
     }
     refreshBuildBtn();
   }
 
-  /* ---------- 输入选择 ---------- */
+  /* ---------- Invoer keuse ---------- */
   function onPickResult(path) {
     if (!path) {
       state.inputDir = '';
@@ -78,7 +78,7 @@
     btn.disabled = !canBuild;
   }
 
-  /* ---------- 日志 ---------- */
+  /* ---------- Log ---------- */
   function appendLog(text, cls) {
     var span = document.createElement('span');
     if (cls) span.className = cls;
@@ -92,16 +92,16 @@
     return '[' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '] ';
   }
 
-  /* ---------- 构建 ---------- */
+  /* ---------- Bou ---------- */
   function startBuild() {
     if (state.building) return;
     var appName = $('appName').value.trim();
-    if (!appName) { toast('请填写应用名称'); $('appName').focus(); return; }
+    if (!appName) { toast('Vul asseblief App Naam in'); $('appName').focus(); return; }
 
     var pkg = $('pkg').value.trim();
     var pkgPattern = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/;
-    if (pkg && !pkgPattern.test(pkg)) { toast('包名格式不正确，例如 com.example.app'); return; }
-    if (!pkg) pkg = 'com.html2apk.app' + (Date.now() % 100000);
+    if (pkg && !pkgPattern.test(pkg)) { toast('Package naam is verkeerd, bv: com.example.app'); return; }
+    if (!pkg) pkg = 'com.psbuilder.app' + (Date.now() % 100000);
 
     var versionName = $('verName').value.trim() || '1.0';
     var versionCode = parseInt($('verCode').value, 10);
@@ -115,31 +115,31 @@
       entryFile: 'index.html',
       inputDir: state.inputDir,
       iconPath: state.iconPath,
-      statusBarColor: '#f0ede4',
-      navBarColor: '#f0ede4',
-      backgroundColor: '#f0ede4'
+      statusBarColor: '#0B0E14',
+      navBarColor: '#0B0E14',
+      backgroundColor: '#0B0E14'
     };
 
     state.building = true;
     refreshBuildBtn();
     var btn = $('buildBtn');
-    btn.textContent = 'BUILDING…';
+    btn.textContent = 'BOU NOU…';
     btn.disabled = true;
-    setEngine('busy', 'ENGINE BUSY');
+    setEngine('busy', 'ENJIN BESIG');
     $('resultPanel').hidden = true;
     LOG.textContent = '';
-    appendLog(stamp() + '$ html2apk build --app "' + appName + '" --pkg ' + pkg);
+    appendLog(stamp() + '$ psbuilder build --app "' + appName + '" --pkg ' + pkg);
 
     bridge.startBuild(JSON.stringify(cfg));
   }
 
-  /* ---------- 原生回调 ---------- */
+  /* ---------- Native callbacks ---------- */
   window.onPickResult = function (path) { onPickResult(path); };
 
-  /* ---------- 封面图标 ---------- */
+  /* ---------- Voorblad ikoon ---------- */
   window.onIconResult = function (path, preview) {
     if (!path || !preview) {
-      toast('图片选择失败或无法解码');
+      toast('Ikoon kon nie gelees word nie');
       return;
     }
     state.iconPath = path;
@@ -147,7 +147,7 @@
     img.src = preview;
     img.hidden = false;
     $('iconClear').hidden = false;
-    toast('封面图标已设置');
+    toast('Ikoon gestel');
   };
 
   function clearIcon() {
@@ -164,29 +164,29 @@
   window.onBuildDone = function (path, size) {
     state.building = false;
     var btn = $('buildBtn');
-    btn.textContent = 'EXECUTE BUILD';
+    btn.textContent = 'BOU APK';
     refreshBuildBtn();
-    setEngine('on', 'ENGINE READY');
-    appendLog(stamp() + 'BUILD COMPLETE - ' + size, 'ok');
+    setEngine('on', 'ENJIN GEREED');
+    appendLog(stamp() + 'BOU VOLTOOI - ' + size, 'ok');
     $('rPath').textContent = path;
     $('rSize').textContent = size;
     $('rPkg').textContent = $('pkg').value.trim();
     $('resultPanel').hidden = false;
     $('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    toast('构建完成');
+    toast('Bou voltooi ✓');
   };
 
   window.onBuildError = function (msg) {
     state.building = false;
     var btn = $('buildBtn');
-    btn.textContent = 'EXECUTE BUILD';
+    btn.textContent = 'BOU APK';
     refreshBuildBtn();
-    setEngine('fault', 'BUILD FAILED');
-    appendLog(stamp() + 'ERROR: ' + msg, 'err');
-    toast('构建失败');
+    setEngine('fault', 'BOU HET MISLUK');
+    appendLog(stamp() + 'FOUT: ' + msg, 'err');
+    toast('Bou het misluk');
   };
 
-  /* ---------- 事件绑定 ---------- */
+  /* ---------- Event binding ---------- */
   function bind() {
     $('pickFile').addEventListener('click', function () {
       if (state.building) return;
@@ -223,7 +223,7 @@
     t._h = setTimeout(function () { t.classList.remove('show'); }, 1800);
   }
 
-  /* ---------- 启动 ---------- */
+  /* ---------- Startup ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     bind();
     checkEngine();

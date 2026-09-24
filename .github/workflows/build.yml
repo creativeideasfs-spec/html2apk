@@ -18,7 +18,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Installeer Android 36 SDK
+      - name: Installeer Android SDK
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;34.0.0" "platform-tools"
@@ -35,6 +35,27 @@ jobs:
             -keysize 2048 \
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Laai apksig jar af
+        run: |
+          mkdir -p app/libs
+          curl -L -o app/libs/apksig-8.5.2.jar \
+            https://dl.google.com/dl/android/maven2/com/android/tools/build/apksig/8.5.2/apksig-8.5.2.jar
+          ls -lh app/libs/
+
+      - name: Maak gradlew uitvoerbaar
+        run: chmod +x ./gradlew
+
+      - name: Bou APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Laai APK op
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PS-Builder-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn            -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Maak gradlew uitvoerbaar
         run: chmod +x ./gradlew

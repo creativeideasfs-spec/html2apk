@@ -18,23 +18,44 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Wys Android SDK
+      - name: Aanvaar Android lisensies
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls $ANDROID_HOME 2>/dev/null || echo "Geen SDK"
+          mkdir -p $ANDROID_HOME/licenses
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_HOME/licenses/android-sdk-preview-license
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > $ANDROID_HOME/licenses/android-sdk-preview-license
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Skep local.properties
+      - name: Installeer SDK komponente
         run: |
-          if [ -n "$ANDROID_HOME" ]; then
-            echo "sdk.dir=$ANDROID_HOME" > local.properties
-          elif [ -n "$ANDROID_SDK_ROOT" ]; then
-            echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          fi
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" || \
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" || true
+
+      - name: Wys projek Gradle config
+        run: |
+          echo "=== build.gradle ==="
+          cat build.gradle 2>/dev/null || true
+          echo "=== app/build.gradle ==="
+          cat app/build.gradle 2>/dev/null || cat app/build.gradle.kts 2>/dev/null || true
+          echo "=== local.properties ==="
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
           cat local.properties
 
       - name: Maak gradlew uitvoerbaar
         run: chmod +x ./gradlew
+
+      - name: Bou Debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Laai APK op
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PS-Builder-APK
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/**/*.apk
+          if-no-files-found: warn        run: chmod +x ./gradlew
 
       - name: Bou Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace

@@ -5,7 +5,7 @@ plugins {
 
 android {
   namespace = "com.html2apk.builder"
-  compileSdk = 36
+  compileSdk = 35
 
   defaultConfig {
     applicationId = "com.html2apk.builder"
